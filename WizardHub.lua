@@ -1,4 +1,4 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/WizardOne4/Scripts/main/WizardHub.lua"))()local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/WizardScripts/WizardHub/main/WizardHub.lua"))()local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
     Name = "Wizard Hub",
     LoadingTitle = "Loading...",
