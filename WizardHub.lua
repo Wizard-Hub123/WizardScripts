@@ -20,38 +20,45 @@ local function forceTP(target)
     end
 end
 
-local function fastPurchase(shopType, data)
-    local remote = game:GetService("ReplicatedStorage").RemoteEvents.PurchaseShopItem
-    local targetPos = (shopType == "SeedShop") and seedShopPos or gearShopPos
-    
-    -- Eto yung fix para sa Gear
-    local arg
-    if shopType == "SeedShop" then
-        arg = data
-    else
-        -- Gear format fix
-        arg = {[1] = "GearShop", [data.i] = data.n}
-    end
-
-    pcall(function()
-        -- Unang try: Bili agad
-        remote:InvokeServer(shopType, arg)
-        
-        -- Bypass distance
-        forceTP(targetPos)
-        task.wait(0.02)
-        
-        -- Pangalawang try para siguradong pasok
-        remote:InvokeServer(shopType, arg)
-    end)
-end
 
 local SeedTab = Window:CreateTab("Seed Shop")
 local GearTab = Window:CreateTab("Gear Shop")
 
 _G.AllSeeds = false
 SeedTab:CreateToggle({
-    Name = "Auto Buy All Seeds",
+    Name local function fastPurchase(shopType, data)
+    local remote = game:GetService("ReplicatedStorage").RemoteEvents.PurchaseShopItem
+    local targetPos = (shopType == "SeedShop") and seedShopPos or gearShopPos
+    
+    -- Eto ang saktong format base sa log mo
+    local args
+    if shopType == "SeedShop" then
+        args = data
+    else
+        -- Para sa Gear Shop: "GearShop" + Item Name
+        args = {"GearShop", data.n or data}
+    end
+
+    pcall(function()
+        -- Direct Invoke gamit ang unpack para makuha yung format sa log mo
+        if shopType == "GearShop" then
+            remote:InvokeServer(unpack(args))
+        else
+            remote:InvokeServer(shopType, args)
+        end
+        
+        -- TP bypass
+        forceTP(targetPos)
+        task.wait(0.01)
+        
+        -- Double check purchase
+        if shopType == "GearShop" then
+            remote:InvokeServer(unpack(args))
+        else
+            remote:InvokeServer(shopType, args)
+        end
+    end)
+        end= "Auto Buy All Seeds",
     CurrentValue = false,
     Callback = function(v)
         _G.AllSeeds = v
