@@ -212,7 +212,10 @@ for i, name in ipairs(seeds) do SeedTab:CreateToggle({Name = "Auto "..name, Call
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "Wizard Hub | v3.0",
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Wizard Hub | Garden Horizons v3.0",
     LoadingTitle = "Wizard Systems Loading...",
     ConfigurationSaving = {Enabled = false}
 })
@@ -242,12 +245,92 @@ local function fastPurchase(shopType, data)
             task.wait(0.01)
             remote:InvokeServer("SeedShop", data)
         else
-            -- SAKTONG FORMAT PARA SA GEAR (Base sa logs mo)
             local args = {"GearShop", data.n or data}
             remote:InvokeServer(unpack(args))
             forceTP(targetPos)
             task.wait(0.01)
             remote:InvokeServer(unpack(args))
+        end
+    end)
+end
+
+local SeedTab = Window:CreateTab("Seed Shop")
+local GearTab = Window:CreateTab("Gear Shop")
+
+_G.AllSeeds = false
+SeedTab:CreateToggle({
+    Name = "Auto Buy All Seeds",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AllSeeds = v
+        task.spawn(function()
+            while _G.AllSeeds do
+                for _, name in pairs(seeds) do
+                    if not _G.AllSeeds then break end
+                    fastPurchase("SeedShop", name)
+                    task.wait(0.01)
+                end
+                task.wait()
+            end
+        end)
+    end
+})
+
+_G.AllGears = false
+GearTab:CreateToggle({
+    Name = "Auto Buy All Gears",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AllGears = v
+        task.spawn(function()
+            while _G.AllGears do
+                for _, g in pairs(gears) do
+                    if not _G.AllGears then break end
+                    fastPurchase("GearShop", g)
+                    task.wait(0.01)
+                end
+                task.wait()
+            end
+        end)
+    end
+})
+
+for i, name in ipairs(seeds) do 
+    SeedTab:CreateToggle({
+        Name = "Auto "..name, 
+        Callback = function(v) 
+            _G["S"..i] = v 
+            task.spawn(function() 
+                while _G["S"..i] do 
+                    fastPurchase("SeedShop", name) 
+                    task.wait(0.05) 
+                end 
+            end) 
+        end
+    }) 
+end
+
+for i, g in ipairs(gears) do 
+    GearTab:CreateToggle({
+        Name = "Auto "..g.n, 
+        Callback = function(v) 
+            _G["G"..i] = v 
+            task.spawn(function() 
+                while _G["G"..i] do 
+                    fastPurchase("GearShop", g) 
+                    task.wait(0.05) 
+                end 
+            end) 
+        end
+    }) 
+end
+
+local VirtualUser = game:service'VirtualUser'
+game:service'Players'.LocalPlayer.Idled:connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+emote:InvokeServer(unpack(args))
         end
     end)
 end
