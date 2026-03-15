@@ -25,6 +25,129 @@ local function canBuy()
 end
 
 local function forceTP(target)
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Wizard Hub | Garden Horizons v3.0",
+    LoadingTitle = "Wizard Ultra Speed Loading...",
+    ConfigurationSaving = {Enabled = false}
+})
+
+local seedShopPos = Vector3.new(176.703, 204.018, 672)
+local gearShopPos = Vector3.new(217.917, 203.999, 605.876)
+
+local seeds = {"Carrot Seed", "Corn Seed", "Onion Seed", "Strawberry Seed", "Mushroom Seed", "Beetroot Seed", "Tomato Seed", "Apple Seed", "Rose Seed", "Wheat Seed", "Banana Seed", "Plum Seed", "Potato Seed", "Cabbage Seed", "Cherry Seed", "Bamboo Seed", "Mango Seed", "Watermelon Seed", "Pineapple Seed"}
+local gears = {"Watering Can", "Basic Sprinkler", "Harvest Bell", "Turbo Sprinkler", "Favorite Tool", "Super Sprinkler", "Trowel", "Reverter"}
+
+local function forceTP(target)
+    local char = game.Players.LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        root.CFrame = CFrame.new(target)
+    end
+end
+
+-- ULTRA FAST PURCHASE LOGIC
+local function ultraPurchase(shopType, itemName)
+    local remote = game:GetService("ReplicatedStorage").RemoteEvents.PurchaseShopItem
+    local targetPos = (shopType == "SeedShop") and seedShopPos or gearShopPos
+    
+    forceTP(targetPos)
+    -- Spam 3 times per call para siguradong pumasok sa server
+    pcall(function()
+        remote:InvokeServer(shopType, itemName)
+        remote:InvokeServer(shopType, itemName)
+        remote:InvokeServer(shopType, itemName)
+    end)
+end
+
+local SeedTab = Window:CreateTab("Seed Shop")
+local GearTab = Window:CreateTab("Gear Shop")
+
+-- [ TURBO BUY ALL SECTION ] --
+SeedTab:CreateSection("Turbo Buy All")
+
+_G.AllSeeds = false
+SeedTab:CreateToggle({
+    Name = "Instant Buy ALL Seeds",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AllSeeds = v
+        task.spawn(function()
+            while _G.AllSeeds do
+                for _, name in pairs(seeds) do
+                    if not _G.AllSeeds then break end
+                    ultraPurchase("SeedShop", name)
+                    task.wait(0.001) -- Eto yung requested speed mo
+                end
+                task.wait(0.1) -- Konting hinga bago mag-loop ulit para makagalaw
+            end
+        end)
+    end
+})
+
+GearTab:CreateSection("Turbo Buy All")
+
+_G.AllGears = false
+GearTab:CreateToggle({
+    Name = "Instant Buy ALL Gears",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AllGears = v
+        task.spawn(function()
+            while _G.AllGears do
+                for _, name in pairs(gears) do
+                    if not _G.AllGears then break end
+                    ultraPurchase("GearShop", name)
+                    task.wait(0.001)
+                end
+                task.wait(0.1)
+            end
+        end)
+    end
+})
+
+-- [ INDIVIDUAL TOGGLES SECTION ] --
+SeedTab:CreateSection("Individual Seeds")
+for i, name in ipairs(seeds) do 
+    SeedTab:CreateToggle({
+        Name = "Auto "..name, 
+        CurrentValue = false,
+        Callback = function(v) 
+            _G["S"..i] = v 
+            task.spawn(function() 
+                while _G["S"..i] do 
+                    ultraPurchase("SeedShop", name) 
+                    task.wait(0.001) 
+                end 
+            end) 
+        end
+    }) 
+end
+
+GearTab:CreateSection("Individual Gears")
+for i, name in ipairs(gears) do 
+    GearTab:CreateToggle({
+        Name = "Auto "..name, 
+        CurrentValue = false,
+        Callback = function(v) 
+            _G["G"..i] = v 
+            task.spawn(function() 
+                while _G["G"..i] do 
+                    ultraPurchase("GearShop", name) 
+                    task.wait(0.001) 
+                end 
+            end) 
+        end
+    }) 
+end
+
+-- ANTI-AFK
+local VirtualUser = game:service'VirtualUser'
+game:service'Players'.LocalPlayer.Idled:connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
     local char = game.Players.LocalPlayer.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
     if root then
@@ -103,60 +226,7 @@ local function turboPurchase(shopType, itemList)
     forceTP(targetPos)
     task.wait(0.1) -- Bigay lang natin ng konting hinga para ma-detect ng game
     
-    for _, itemName in pairs(itemList) do
-        -- Check kung naka-toggle pa
-        if (shopType == "SeedShop" and not _G.AllSeeds) or (shopType == "GearShop" and not _G.AllGears) then break end
-        
-        -- Spam buy 3 times per item nang mabilis
-        for i = 1, 3 do
-            pcall(function()
-                remote:InvokeServer(shopType, itemName)
-            end)
-        end
-        task.wait(0.001) -- Eto yung ultra speed na gusto mo
-    end
-end
 
-local SeedTab = Window:CreateTab("Seed Shop")
-local GearTab = Window:CreateTab("Gear Shop")
-
-_G.AllSeeds = false
-SeedTab:CreateToggle({
-    Name = "Turbo Buy All Seeds",
-    CurrentValue = false,
-    Callback = function(v)
-        _G.AllSeeds = v
-        task.spawn(function()
-            while _G.AllSeeds do
-                turboPurchase("SeedShop", seeds)
-                task.wait(1) -- Mag-antay ng 1 sec bago mag-check ulit ng stock para makalakad ka muna
-            end
-        end)
-    end
-})
-
-_G.AllGears = false
-GearTab:CreateToggle({
-    Name = "Turbo Buy All Gears",
-    CurrentValue = false,
-    Callback = function(v)
-        _G.AllGears = v
-        task.spawn(function()
-            while _G.AllGears do
-                turboPurchase("GearShop", gears)
-                task.wait(1)
-            end
-        end)
-    end
-})
-
--- ANTI-AFK
-local VirtualUser = game:service'VirtualUser'
-game:service'Players'.LocalPlayer.Idled:connect(function()
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
-end)
-ickButton2(Vector2.new())
 end)
 ervice'Players'.LocalPlayer.Idled:connect(function()
     VirtualUser:CaptureController()
