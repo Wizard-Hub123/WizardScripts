@@ -1,4 +1,4 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 local Window = Rayfield:CreateWindow({
     Name = "Wizard Hub | Garden Horizons v3.0",
     LoadingTitle = "Loading...",
@@ -270,31 +270,6 @@ SeedTab:CreateToggle({
                     fastPurchase("SeedShop", name)
                     task.wait(0.01)
                 end
-                task.wait()
-            end
-        end)
-    end
-})
-
-_G.AllGears = false
-GearTab:CreateToggle({
-    Name = "Auto Buy All Gears",
-    CurrentValue = false,
-    Callback = function(v)
-        _G.AllGears = v
-        task.spawn(function()
-            while _G.AllGears do
-                for _, g in pairs(gears) do
-                    if not _G.AllGears then break end
-                    fastPurchase("GearShop", g)
-                    task.wait(0.01)
-                end
-                task.wait()
-            end
-        end)
-    end
-})
-
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
 local Window = Rayfield:CreateWindow({
@@ -413,3 +388,87 @@ game:service'Players'.LocalPlayer.Idled:connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
 end)
+                task.wait()
+            end
+        end)
+    end
+})
+
+_G.AllGears = false
+GearTab:CreateToggle({
+    Name = "Auto Buy All Gears",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AllGears = v
+        task.spawn(function()
+            while _G.AllGears do
+                for _, g in pairs(gears) do
+                    if not _G.AllGears then break end
+                    fastPurchase("GearShop", g)
+                    task.wait(0.01)
+                end
+                task.wait()
+            end
+        end)
+    end
+})
+
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Wizard Hub | Garden Horizons v3.0",
+    LoadingTitle = "Wizard Systems Loading...",
+    ConfigurationSaving = {Enabled = false}
+})
+
+local seedShopPos = Vector3.new(176.703, 204.018, 672)
+local gearShopPos = Vector3.new(217.917, 203.999, 605.876)
+
+local seeds = {"Carrot Seed", "Corn Seed", "Onion Seed", "Strawberry Seed", "Mushroom Seed", "Beetroot Seed", "Tomato Seed", "Apple Seed", "Rose Seed", "Wheat Seed", "Banana Seed", "Plum Seed", "Potato Seed", "Cabbage Seed", "Cherry Seed", "Bamboo Seed", "Mango Seed", "Watermelon Seed", "Pineapple Seed"}
+local gears = {{n="Watering Can"},{n="Basic Sprinkler"},{n="Harvest Bell"},{n="Turbo Sprinkler"},{n="Favorite Tool"},{n="Super Sprinkler"},{n="Trowel"},{n="Reverter"}}
+
+local function forceTP(target)
+    local char = game.Players.LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        root.Velocity = Vector3.new(0,0,0)
+        root.CFrame = CFrame.new(target)
+    end
+end
+
+local function fastPurchase(shopType, data)
+    local remote = game:GetService("ReplicatedStorage").RemoteEvents.PurchaseShopItem
+    local targetPos = (shopType == "SeedShop") and seedShopPos or gearShopPos
+    pcall(function()
+        if shopType == "SeedShop" then
+            remote:InvokeServer("SeedShop", data)
+            forceTP(targetPos)
+            task.wait(0.01)
+            remote:InvokeServer("SeedShop", data)
+        else
+            local args = {"GearShop", data.n or data}
+            remote:InvokeServer(unpack(args))
+            forceTP(targetPos)
+            task.wait(0.01)
+            remote:InvokeServer(unpack(args))
+        end
+    end)
+end
+
+local SeedTab = Window:CreateTab("Seed Shop")
+local GearTab = Window:CreateTab("Gear Shop")
+
+_G.AllSeeds = false
+SeedTab:CreateToggle({
+    Name = "Auto Buy All Seeds",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AllSeeds = v
+        task.spawn(function()
+            while _G.AllSeeds do
+                for _, name in pairs(seeds) do
+                    if not _G.AllSeeds then break end
+                    fastPurchase("SeedShop", name)
+                    task.wait(0.01)
+                end
+                task.wait()
