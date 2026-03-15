@@ -173,6 +173,13 @@ local Window = Rayfield:CreateWindow({
     LoadingTitle = "Wizard Fix V5 Loading...",
     ConfigurationSaving = {Enabled = false}
 })
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Wizard Hub | Garden Horizons v3.0",
+    LoadingTitle = "Wizard Spam God Loading...",
+    ConfigurationSaving = {Enabled = false}
+})
 
 local seedShopPos = Vector3.new(176.703, 204.018, 672)
 local gearShopPos = Vector3.new(217.917, 203.999, 605.876)
@@ -188,25 +195,124 @@ local function forceTP(target)
     end
 end
 
--- FIXED PURCHASE LOGIC (Para hindi ma-stuck)
-local function safePurchase(shopType, itemName)
+-- GET CURRENT MONEY (Change "Money" if your leaderstats name is different)
+local function getMoney()
+    local p = game.Players.LocalPlayer
+    return p.leaderstats and p.leaderstats:FindFirstChild("Money") and p.leaderstats.Money.Value or 0
+end
+
+-- SPAM 50 BUY LOGIC WITH STOCK CHECK
+local function spamPurchase(shopType, itemName)
     local remote = game:GetService("ReplicatedStorage").RemoteEvents.PurchaseShopItem
     local targetPos = (shopType == "SeedShop") and seedShopPos or gearShopPos
     
-    -- Teleport muna bago bumili
+    local startMoney = getMoney()
+    
+    -- Teleport to shop
     forceTP(targetPos)
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+    task.wait(0.01)
+    
+    -- Spam 50 times
+    for i = 1, 50 do
+        pcall(function()
+            remote:InvokeServer(shopType, itemName)
+        end)
+    end
+    
+    task.wait(0.05) -- Sandaling hintay para mag-update ang leaderstats
+    
+    -- STOCK CHECK: Kung hindi nabawasan ang pera, ibig sabihin Out of Stock
+    if getMoney() >= startMoney then
+        return false -- No stock / No purchase made
+    end
+    return true -- Successfully bought
+end
 
-local Window = Rayfield:CreateWindow({
-    Name = "Wizard Hub | Garden Horizons v3.0",
-    LoadingTitle = "Wizard Turbo V6 Loading...",
-    ConfigurationSaving = {Enabled = false}
+local SeedTab = Window:CreateTab("Seed Shop")
+local GearTab = Window:CreateTab("Gear Shop")
+
+-- [ TURBO BUY ALL SECTION ] --
+_G.AllSeeds = false
+SeedTab:CreateToggle({
+    Name = "Spam Buy ALL Seeds (50x)",
+    Callback = function(v)
+        _G.AllSeeds = v
+        task.spawn(function()
+            while _G.AllSeeds do
+                for _, name in pairs(seeds) do
+                    if not _G.AllSeeds then break end
+                    local success = spamPurchase("SeedShop", name)
+                    if not success then 
+                        -- Kung wala nang stock, skip muna sa susunod na seed
+                        task.wait(0.01)
+                    end
+                end
+                task.wait(0.5) -- Pahinga para makagalaw 'pag tapos na ang listahan
+            end
+        end)
+    end
 })
 
-local seedShopPos = Vector3.new(176.703, 204.018, 672)
-local gearShopPos = Vector3.new(217.917, 203.999, 605.876)
+_G.AllGears = false
+GearTab:CreateToggle({
+    Name = "Spam Buy ALL Gears (50x)",
+    Callback = function(v)
+        _G.AllGears = v
+        task.spawn(function()
+            while _G.AllGears do
+                for _, name in pairs(gears) do
+                    if not _G.AllGears then break end
+                    local success = spamPurchase("GearShop", name)
+                    if not success then task.wait(0.01) end
+                end
+                task.wait(0.5)
+            end
+        end)
+    end
+})
 
-local seeds = {"Carrot Seed", "Corn Seed", "Onion Seed", "Strawberry Seed", "Mushroom Seed", "Beetroot Seed", "Tomato Seed", "Apple Seed", "Rose Seed", "Wheat Seed", "Banana Seed", "Plum Seed", "Potato Seed", "Cabbage Seed", "Cherry Seed", "Bamboo Seed", "Mango Seed", "Watermelon Seed", "Pineapple Seed"}
+-- [ INDIVIDUAL TOGGLES ] --
+SeedTab:CreateSection("Individual Seeds")
+for i, name in ipairs(seeds) do 
+    SeedTab:CreateToggle({
+        Name = "Auto "..name, 
+        Callback = function(v) 
+            _G["S"..i] = v 
+            task.spawn(function() 
+                while _G["S"..i] do 
+                    local success = spamPurchase("SeedShop", name)
+                    if not success then task.wait(1) end -- Wait 1s if out of stock
+                    task.wait(0.001)
+                end 
+            end) 
+        end
+    }) 
+end
+
+GearTab:CreateSection("Individual Gears")
+for i, name in ipairs(gears) do 
+    GearTab:CreateToggle({
+        Name = "Auto "..name, 
+        Callback = function(v) 
+            _G["G"..i] = v 
+            task.spawn(function() 
+                while _G["G"..i] do 
+                    local success = spamPurchase("GearShop", name)
+                    if not success then task.wait(1) end
+                    task.wait(0.001) 
+                end 
+            end) 
+        end
+    }) 
+end
+
+-- ANTI-AFK
+local VirtualUser = game:service'VirtualUser'
+game:service'Players'.LocalPlayer.Idled:connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+ed", "Tomato Seed", "Apple Seed", "Rose Seed", "Wheat Seed", "Banana Seed", "Plum Seed", "Potato Seed", "Cabbage Seed", "Cherry Seed", "Bamboo Seed", "Mango Seed", "Watermelon Seed", "Pineapple Seed"}
 local gears = {"Watering Can", "Basic Sprinkler", "Harvest Bell", "Turbo Sprinkler", "Favorite Tool", "Super Sprinkler", "Trowel", "Reverter"}
 
 local function forceTP(target)
