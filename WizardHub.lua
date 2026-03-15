@@ -22,12 +22,26 @@ end
 
 local function fastPurchase(shopType, data)
     local remote = game:GetService("ReplicatedStorage").RemoteEvents.PurchaseShopItem
-    local arg = (shopType == "SeedShop") and data or unpack({[1] = "GearShop", [data.i] = data.n})
     local targetPos = (shopType == "SeedShop") and seedShopPos or gearShopPos
+    
+    -- Eto yung fix para sa Gear
+    local arg
+    if shopType == "SeedShop" then
+        arg = data
+    else
+        -- Gear format fix
+        arg = {[1] = "GearShop", [data.i] = data.n}
+    end
+
     pcall(function()
+        -- Unang try: Bili agad
         remote:InvokeServer(shopType, arg)
+        
+        -- Bypass distance
         forceTP(targetPos)
-        task.wait(0.01)
+        task.wait(0.02)
+        
+        -- Pangalawang try para siguradong pasok
         remote:InvokeServer(shopType, arg)
     end)
 end
