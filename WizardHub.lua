@@ -1,0 +1,91 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/WizardOne4/Scripts/main/WizardHub.lua"))()local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Window = Rayfield:CreateWindow({
+    Name = "Wizard Hub",
+    LoadingTitle = "Loading...",
+    ConfigurationSaving = {Enabled = false}
+})
+
+-- MGA COORDINATES (Updated)
+local seedShopPos = Vector3.new(176.703, 204.018, 672)
+local gearShopPos = Vector3.new(217.917, 203.999, 605.876)
+
+local seeds = {"Carrot Seed", "Corn Seed", "Onion Seed", "Strawberry Seed", "Mushroom Seed", "Beetroot Seed", "Tomato Seed", "Apple Seed", "Rose Seed", "Wheat Seed", "Banana Seed", "Plum Seed", "Potato Seed", "Cabbage Seed", "Cherry Seed", "Bamboo Seed", "Mango Seed", "Watermelon Seed", "Pineapple Seed"}
+local gears = {{i=2,n="Watering Can"},{i=3,n="Basic Sprinkler"},{i=4,n="Harvest Bell"},{i=6,n="Turbo Spinkler"},{i=7,n="Favorite Tool"},{i=8,n="Super Sprinkler"},{i=9,n="Trowel"},{i=10,n="Reverter"}}
+
+-- BYPASS TELEPORT
+local function forceTP(target)
+    local char = game.Players.LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        root.Velocity = Vector3.new(0,0,0)
+        root.CFrame = CFrame.new(target)
+    end
+end
+
+-- SPEED HUB STYLE PURCHASE
+local function fastPurchase(shopType, data)
+    local remote = game:GetService("ReplicatedStorage").RemoteEvents.PurchaseShopItem
+    local arg = (shopType == "SeedShop") and data or unpack({[1] = "GearShop", [data.i] = data.n})
+    local targetPos = (shopType == "SeedShop") and seedShopPos or gearShopPos
+
+    pcall(function()
+        remote:InvokeServer(shopType, arg) -- Bili agad kahit malayo
+        forceTP(targetPos) -- TP agad para pumasok
+        task.wait(0.01)
+        remote:InvokeServer(shopType, arg) -- Double tap bili
+    end)
+end
+
+local SeedTab = Window:CreateTab("Seed Shop")
+local GearTab = Window:CreateTab("Gear Shop")
+
+-- AUTO ALL SEEDS
+_G.AllSeeds = false
+SeedTab:CreateToggle({
+    Name = "Auto Buy All Seeds",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AllSeeds = v
+        task.spawn(function()
+            while _G.AllSeeds do
+                for _, name in pairs(seeds) do
+                    if not _G.AllSeeds then break end
+                    fastPurchase("SeedShop", name)
+                    task.wait(0.01)
+                end
+                task.wait()
+            end
+        end)
+    end
+})
+
+-- AUTO ALL GEARS
+_G.AllGears = false
+GearTab:CreateToggle({
+    Name = "Auto Buy All Gears",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AllGears = v
+        task.spawn(function()
+            while _G.AllGears do
+                for _, g in pairs(gears) do
+                    if not _G.AllGears then break end
+                    fastPurchase("GearShop", g)
+                    task.wait(0.01)
+                end
+                task.wait()
+            end
+        end)
+    end
+})
+
+-- INDIVIDUALS
+for i, name in ipairs(seeds) do SeedTab:CreateToggle({Name = "Auto "..name, Callback = function(v) _G["S"..i] = v task.spawn(function() while _G["S"..i] do fastPurchase("SeedShop", name) task.wait(0.05) end end) end}) end
+for i, g in ipairs(gears) do GearTab:CreateToggle({Name = "Auto "..g.n, Callback = function(v) _G["G"..i] = v task.spawn(function() while _G["G"..i] do fastPurchase("GearShop", g) task.wait(0.05) end end) end}) end
+
+-- ANTI-AFK (Para 'di ma-kick)
+local VirtualUser = game:service'VirtualUser'
+game:service'Players'.LocalPlayer.Idled:connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
