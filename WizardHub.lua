@@ -366,54 +366,131 @@ local GearTab = Window:CreateTab("Gear Shop")
 -- [ TURBO BUY ALL SECTION ] --
 _G.AllSeeds = false
 SeedTab:CreateToggle({
-    Name = "Spam Buy ALL Seeds (50x)",
-    Callback = function(v)
-        _G.AllSeeds = v
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Wizard Hub | Garden Horizons v3.0",
+    LoadingTitle = "Wizard Smart Flow Loading...",
+    ConfigurationSaving = {Enabled = false}
+})
+
+local seedShopPos = Vector3.new(176.703, 204.018, 672)
+local gearShopPos = Vector3.new(217.917, 203.999, 605.876)
+
+local seeds = {"Carrot Seed", "Corn Seed", "Onion Seed", "Strawberry Seed", "Mushroom Seed", "Beetroot Seed", "Tomato Seed", "Apple Seed", "Rose Seed", "Wheat Seed", "Banana Seed", "Plum Seed", "Potato Seed", "Cabbage Seed", "Cherry Seed", "Bamboo Seed", "Mango Seed", "Watermelon Seed", "Pineapple Seed"}
+local gears = {"Watering Can", "Basic Sprinkler", "Harvest Bell", "Turbo Sprinkler", "Favorite Tool", "Super Sprinkler", "Trowel", "Reverter"}
+
+local function forceTP(target)
+    local char = game.Players.LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        root.CFrame = CFrame.new(target)
+    end
+end
+
+local function getMoney()
+    local p = game.Players.LocalPlayer
+    local m = p:FindFirstChild("leaderstats") and p.leaderstats:FindFirstChild("Money")
+    return m and m.Value or 0
+end
+
+-- ULTRA SPAM FUNCTION
+local function ultraSpam(shopType, itemName)
+    local remote = game:GetService("ReplicatedStorage").RemoteEvents.PurchaseShopItem
+    local startMoney = getMoney()
+    
+    -- Spam 50x
+    for i = 1, 50 do
         task.spawn(function()
-            while _G.AllSeeds do
+            remote:InvokeServer(shopType, itemName)
+        end)
+    end
+    
+    task.wait(0.05) -- Konting hinga para mag-update ang pera
+    return getMoney() < startMoney -- True kung may nabili
+end
+
+local SeedTab = Window:CreateTab("Seed Shop")
+local GearTab = Window:CreateTab("Gear Shop")
+
+_G.MasterAuto = false
+SeedTab:CreateToggle({
+    Name = "Master Auto Buy (Seeds -> Gear)",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.MasterAuto = v
+        task.spawn(function()
+            while _G.MasterAuto do
+                local boughtSomething = false
+                
+                -- 1. SEED SHOP CHECK
                 for _, name in pairs(seeds) do
-                    if not _G.AllSeeds then break end
-                    local success = spamPurchase("SeedShop", name)
-                    if not success then 
-                        -- Kung wala nang stock, skip muna sa susunod na seed
-                        task.wait(0.01)
+                    if not _G.MasterAuto then break end
+                    forceTP(seedShopPos)
+                    if ultraSpam("SeedShop", name) then
+                        boughtSomething = true
+                        task.wait(0.001)
                     end
                 end
-                task.wait(0.5) -- Pahinga para makagalaw 'pag tapos na ang listahan
-            end
-        end)
-    end
-})
-
-_G.AllGears = false
-GearTab:CreateToggle({
-    Name = "Spam Buy ALL Gears (50x)",
-    Callback = function(v)
-        _G.AllGears = v
-        task.spawn(function()
-            while _G.AllGears do
+                
+                -- 2. GEAR SHOP CHECK (Lilipat lang kung tapos na sa seeds)
                 for _, name in pairs(gears) do
-                    if not _G.AllGears then break end
-                    local success = spamPurchase("GearShop", name)
-                    if not success then task.wait(0.01) end
+                    if not _G.MasterAuto then break end
+                    forceTP(gearShopPos)
+                    if ultraSpam("GearShop", name) then
+                        boughtSomething = true
+                        task.wait(0.001)
+                    end
                 end
-                task.wait(0.5)
+                
+                -- 3. SMART RELEASE
+                if not boughtSomething then
+                    -- Kapag wala nang mabili sa pareho, bitaw muna ang TP ng 5 seconds
+                    task.wait(5) 
+                else
+                    task.wait(0.1)
+                end
             end
         end)
     end
 })
 
--- [ INDIVIDUAL TOGGLES ] --
+-- Individual Toggles (Turbo Speed 0.001)
 SeedTab:CreateSection("Individual Seeds")
 for i, name in ipairs(seeds) do 
-    SeedTab:CreateToggle({
-        Name = "Auto "..name, 
-        Callback = function(v) 
-            _G["S"..i] = v 
-            task.spawn(function() 
-rchase(shopType, itemList)
-    local remote = game:GetService("ReplicatedStorage").RemoteEvents.PurchaseShopItem
-    local targetPos = (shopType == "SeedShop") and seedShopPos or gearShopPos
+    SeedTab:CreateToggle({Name = "Auto "..name, Callback = function(v) 
+        _G["S"..i] = v 
+        task.spawn(function() 
+            while _G["S"..i] do 
+                forceTP(seedShopPos)
+                if not ultraSpam("SeedShop", name) then task.wait(3) end
+                task.wait(0.001)
+            end 
+        end) 
+    end}) 
+end
+
+GearTab:CreateSection("Individual Gears")
+for i, name in ipairs(gears) do 
+    GearTab:CreateToggle({Name = "Auto "..name, Callback = function(v) 
+        _G["G"..i] = v 
+        task.spawn(function() 
+            while _G["G"..i] do 
+                forceTP(gearShopPos)
+                if not ultraSpam("GearShop", name) then task.wait(3) end
+                task.wait(0.001)
+            end 
+        end) 
+    end}) 
+end
+
+-- ANTI-AFK
+local VirtualUser = game:service'VirtualUser'
+game:service'Players'.LocalPlayer.Idled:connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+hopPos or gearShopPos
     
     -- Teleport ka muna sa shop bago mag-spam
     forceTP(targetPos)
