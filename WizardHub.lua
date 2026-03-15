@@ -2,7 +2,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
     Name = "Wizard Hub | Garden Horizons v3.0",
-    LoadingTitle = "Wizard Ultra-Speed Loading...",
+    LoadingTitle = "Wizard Smart-TP Loading...",
     ConfigurationSaving = {Enabled = false}
 })
 
@@ -20,15 +20,35 @@ local function forceTP(target)
     end
 end
 
--- REAL TURBO SPAM (No Waiting)
-local function fastSpam(shopType, itemName)
+-- SMART MONEY CHECK
+local function getMoney()
+    local p = game.Players.LocalPlayer
+    local m = p:FindFirstChild("leaderstats") and p.leaderstats:FindFirstChild("Money")
+    return m and m.Value or 0
+end
+
+-- TURBO PURCHASE WITH STOCK-STOP
+local function smartSpam(shopType, itemName, pos)
     local remote = game:GetService("ReplicatedStorage").RemoteEvents.PurchaseShopItem
-    -- Sabay-sabay na 50 requests nang hindi naghihintay ng sagot
+    local startMoney = getMoney()
+    
+    -- Mag-TP lang kung ite-test kung may stock
+    forceTP(pos)
+    
+    -- Instant 50 requests
     for i = 1, 50 do
         task.spawn(function()
             remote:InvokeServer(shopType, itemName)
         end)
     end
+    
+    task.wait(0.05) -- Saglit na check
+    
+    -- Kung hindi nabawasan ang pera, return false (Out of Stock)
+    if getMoney() >= startMoney then
+        return false
+    end
+    return true
 end
 
 local SeedTab = Window:CreateTab("Seed Shop")
@@ -36,30 +56,39 @@ local GearTab = Window:CreateTab("Gear Shop")
 
 _G.MasterAuto = false
 SeedTab:CreateToggle({
-    Name = "MASTER TURBO BUY (0.001 Speed)",
+    Name = "Master Smart Buy (Auto-Stop TP)",
     CurrentValue = false,
     Callback = function(v)
         _G.MasterAuto = v
         task.spawn(function()
             while _G.MasterAuto do
-                -- 1. SEEDS MUNA
-                forceTP(seedShopPos)
+                local anyStock = false
+                
+                -- 1. SEEDS CHECK
                 for _, name in pairs(seeds) do
                     if not _G.MasterAuto then break end
-                    fastSpam("SeedShop", name)
-                    task.wait(0.001)
+                    if smartSpam("SeedShop", name, seedShopPos) then
+                        anyStock = true
+                        task.wait(0.001)
+                    end
                 end
                 
-                -- 2. LILIPAT SA GEAR AGAD
-                forceTP(gearShopPos)
+                -- 2. GEARS CHECK
                 for _, name in pairs(gears) do
                     if not _G.MasterAuto then break end
-                    fastSpam("GearShop", name)
-                    task.wait(0.001)
+                    if smartSpam("GearShop", name, gearShopPos) then
+                        anyStock = true
+                        task.wait(0.001)
+                    end
                 end
                 
-                -- 3. PAHINGA PARA MAKAGALAW KUNG WALANG STOCK
-                task.wait(0.5)
+                -- 3. FREEDOM LOGIC
+                if not anyStock then
+                    -- Kapag sinuyod na lahat at wala talagang mabili, 
+                    -- papakawalan ka ng TP nang 5 seconds para makagala ka.
+                    task.wait(5)
+                end
+                task.wait(0.1)
             end
         end)
     end
